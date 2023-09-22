@@ -70,6 +70,8 @@ public class ZookeeperTest {
     @Test
     public void testExsitNode() {
         try {
+            zooKeeper.setData("/xiaoheshan", "hello".getBytes(), -1);
+
             Stat exists = zooKeeper.exists("/xiaoheshan", null);
             // 当前节点的数据版本
             int version = exists.getVersion();
