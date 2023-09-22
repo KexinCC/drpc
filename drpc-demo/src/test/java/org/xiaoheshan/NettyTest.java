@@ -5,6 +5,11 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
+
 public class NettyTest {
 
     @Test
@@ -37,4 +42,26 @@ public class NettyTest {
         ByteBuf buf1 = byteBuf.slice(1, 5);
         ByteBuf buf3 = byteBuf.slice(6, 15);
     }
+
+    @Test
+    public void testMessage() throws IOException {
+        ByteBuf message = Unpooled.buffer();
+        message.writeBytes("xhs".getBytes(StandardCharsets.UTF_8));
+        message.writeByte(1);
+        message.writeShort(125);
+        message.writeInt(256);
+        message.writeByte(1);
+        message.writeByte(0);
+        message.writeByte(2);
+        message.writeLong(251455L);
+        // 用对象流转化为字节数组
+        String s = "123123123";
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(arrayOutputStream);
+        oos.writeObject(s);
+        byte[] buf = arrayOutputStream.toByteArray();
+        message.writeBytes(buf);
+        System.out.println(message);
+    }
+
 }
