@@ -9,10 +9,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 public class ZookeeperTest {
 
     ZooKeeper zooKeeper = null;
+    CountDownLatch countDownLatch = new CountDownLatch(1);
 
     // 定义连接参数
     String connectString = "127.0.0.1:21810";
@@ -21,26 +23,42 @@ public class ZookeeperTest {
 
 
     @Before
-    public void creatZk() {
+    public void createZk() {
         try {
-            this.zooKeeper = new ZooKeeper(connectString, sessionTimeout, null);
+            // new MyWatch() 默认的监听器
+            this.zooKeeper = new ZooKeeper(connectString, sessionTimeout, event -> {
+                // 只有连接成功才放行
+                switch (event.getState()) {
+                    case SyncConnected -> {
+                        System.out.println("客户端连接成功");
+                        countDownLatch.countDown();
+                    }
+                    case AuthFailed -> System.out.println("注册失败");
+
+                    default -> System.out.println("default status");
+
+                }
+
+            });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Test
-    public void testCreatPNode() {
+    public void testCreatePNode() {
         try {
+            // 会等待连接成功
+            countDownLatch.await();
             String result = zooKeeper.create("/xiaoheshan", "hello".getBytes(),
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             System.out.println("result = " + result);
         } catch (KeeperException | InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            if (zooKeeper != null) {
+            if (this.zooKeeper != null) {
                 try {
-                    zooKeeper.close();
+                    this.zooKeeper.close();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -53,13 +71,13 @@ public class ZookeeperTest {
     public void testDeleteNode() {
         try {
             // version: 乐观锁  version不匹配，删除失败，也可以无视版本号
-            zooKeeper.delete("/xiaoheshan", -1);
+            this.zooKeeper.delete("/xiaoheshan", -1);
         } catch (KeeperException | InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            if (zooKeeper != null) {
+            if (this.zooKeeper != null) {
                 try {
-                    zooKeeper.close();
+                    this.zooKeeper.close();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -68,11 +86,11 @@ public class ZookeeperTest {
     }
 
     @Test
-    public void testExsitNode() {
+    public void testExistNode() {
         try {
-            zooKeeper.setData("/xiaoheshan", "hello".getBytes(), -1);
+            this.zooKeeper.setData("/xiaoheshan", "hello".getBytes(), -1);
 
-            Stat exists = zooKeeper.exists("/xiaoheshan", null);
+            Stat exists = this.zooKeeper.exists("/xiaoheshan", null);
             // 当前节点的数据版本
             int version = exists.getVersion();
             // 当前节点的acl数据版本
@@ -86,9 +104,28 @@ public class ZookeeperTest {
         } catch (KeeperException | InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            if (zooKeeper != null) {
+            if (this.zooKeeper != null) {
                 try {
-                    zooKeeper.close();
+                    this.zooKeeper.close();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    @Test
+    public void testWatch() {
+        try {
+            this.zooKeeper.exists("/xiaoheshan", true);
+
+        } catch (KeeperException | InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (this.zooKeeper != null) {
+                try {
+                    this.zooKeeper.close();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
