@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 配置文件每隔1分钟，就检查更新 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 定义参数常量，便于后面直接用${name}来获取value值 -->
+    <property name="log.pattern" value="%d{yyyy-MM-dd} [%thread] [%-5level] %logger{50} - %msg%n"/>
+
+    <property name="log.maxHistory" value="30"/>
+
+    <!-- ch.qos.logback.core.ConsoleAppender 控制台输出 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 过去使用layout，现在都推荐使用encoder
+             作用一：将日志信息转换（格式化）为字符串
+             作用二：然后写入到文件中-->
+        <target>System.out</target>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+    </appender>
+
+
+    <root level="debug">
+        <!-- 表示按照console的设置去输出日志到控制台 -->
+        <appender-ref ref="console"/>
+    </root>
+</configuration>
