@@ -2,9 +2,9 @@ package org.xiaoheshan;
 
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -12,8 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.discovery.Registry;
 import org.xiaoheshan.discovery.RegistryConfig;
 
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -26,9 +29,14 @@ public class DrpcBootstrap {
 
     private final int port = 8088;
     private Registry registry;
-    // 维护已经发布且已经发布的服务列表
-    // K:interface 全限定名称  V:serviceConfig
-    public static final Map<String, ServiceConfig<?>> SERVICE_LIST = new ConcurrentHashMap<>(16);
+    // 维护已经发布且已经发布的服务列表 K:interface 全限定名称  V:serviceConfig
+    private static final Map<String, ServiceConfig<?>> SERVICE_LIST = new ConcurrentHashMap<>(16);
+    // 连接的缓存使用之前 查看 key 有没有重写 toString 和 equals 方法
+    public static final Map<InetSocketAddress, Channel> CHANNEL_CACHE = new ConcurrentHashMap<>();
+
+    // 定义一个全局对外挂起的 completableFuture
+    public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
+
 
     private DrpcBootstrap() {
 
@@ -123,7 +131,16 @@ public class DrpcBootstrap {
                     .childHandler(new ChannelInitializer<NioSocketChannel>() {
                         @Override
                         protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
-                            nioSocketChannel.pipeline().addLast(null);
+                            // 这是核心 需要添加入站和出站的 handler
+                            nioSocketChannel.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+
+                                @Override
+                                protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
+                                    log.info("byteBuf---->{}  接收到的msg",msg.toString(Charset.defaultCharset()));
+
+                                    ctx.channel().writeAndFlush(Unpooled.copiedBuffer("hello client".getBytes()));
+                                }
+                            });
                         }
                     });
 

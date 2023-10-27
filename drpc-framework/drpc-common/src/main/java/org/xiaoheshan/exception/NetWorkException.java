@@ -8,4 +8,8 @@ public class NetWorkException extends RuntimeException {
     public NetWorkException(Exception e) {
 
     }
+
+    public NetWorkException(String message) {
+        super(message);
+    }
 }

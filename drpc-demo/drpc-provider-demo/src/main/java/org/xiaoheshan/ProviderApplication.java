@@ -3,7 +3,7 @@ package org.xiaoheshan;
 import org.xiaoheshan.discovery.RegistryConfig;
 import org.xiaoheshan.impl.HelloDrpcImpl;
 
-public class Application {
+public class ProviderApplication {
     public static void main(String[] args) {
         /*
          * 服务提供方、注册服务、启动服务

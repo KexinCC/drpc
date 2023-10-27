@@ -1,10 +1,12 @@
 package org.xiaoheshan;
 
+import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.discovery.RegistryConfig;
 
-public class Application {
+@Slf4j
+public class ConsumerApplication {
     public static void main(String[] args) {
-        // 像尽一切办法获取代理对象
+        // 想尽一切办法获取代理对象
         ReferenceConfig<HelloDrpc> reference = new ReferenceConfig<>();
         reference.setInterfaceRef(HelloDrpc.class);
 
@@ -12,13 +14,16 @@ public class Application {
         DrpcBootstrap.getInstance()
                 .application("first-drpc-consumer")
                 .registry(new RegistryConfig("zookeeper://nas.kexincc.club:2181"))
-                .reference(reference)
-                .start();
+                .reference(reference);
 
         HelloDrpc helloDrpc = reference.get();
-        helloDrpc.sayHi("hi");
+        String hi = helloDrpc.sayHi("hihi");
+        log.info("hi ---- > {}", hi);
+
+
 
     }
+
 
 
 }
