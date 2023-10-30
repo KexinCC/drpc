@@ -8,6 +8,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.discovery.Registry;
 import org.xiaoheshan.discovery.RegistryConfig;
@@ -132,7 +133,8 @@ public class DrpcBootstrap {
                         @Override
                         protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
                             // 这是核心 需要添加入站和出站的 handler
-                            nioSocketChannel.pipeline().addLast(new SimpleChannelInboundHandler<ByteBuf>() {
+                            nioSocketChannel.pipeline()
+                                    .addLast(new SimpleChannelInboundHandler<ByteBuf>() {
 
                                 @Override
                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
@@ -140,7 +142,7 @@ public class DrpcBootstrap {
 
                                     ctx.channel().writeAndFlush(Unpooled.copiedBuffer("hello client".getBytes()));
                                 }
-                            });
+                            }).addLast(new LoggingHandler());
                         }
                     });
 

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Serializable;
 import java.net.Authenticator;
 
 /**
@@ -15,7 +16,7 @@ import java.net.Authenticator;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class DrpcRequest {
+public class DrpcRequest implements Serializable {
 
     // 请求的id
     private long requestId;

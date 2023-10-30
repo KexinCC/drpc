@@ -72,6 +72,8 @@ public class DrpcMessageEncoder extends MessageToByteEncoder<DrpcRequest> implem
             ObjectOutputStream oos = new ObjectOutputStream(baos);
             oos.writeObject(requestPayload);
             return baos.toByteArray();
+
+            // todo 压缩
         } catch (IOException e) {
             log.error("序列化时出现异常");
             throw new RuntimeException(e);
