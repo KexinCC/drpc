@@ -4,13 +4,13 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import lombok.extern.slf4j.Slf4j;
+import org.xiaoheshan.DrpcBootstrap;
+import org.xiaoheshan.serialize.SerializeFactory;
+import org.xiaoheshan.serialize.Serializer;
+import org.xiaoheshan.serialize.SerializerWrapper;
 import org.xiaoheshan.transport.message.DrpcRequest;
 import org.xiaoheshan.transport.message.MessageFormatConstant;
-import org.xiaoheshan.transport.message.RequestPayload;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 
@@ -27,7 +27,7 @@ import java.io.Serializable;
  * 出站时 第一个经过的处理器
  */
 @Slf4j
-public class DrpcMessageEncoder extends MessageToByteEncoder<DrpcRequest> implements Serializable {
+public class DrpcRequestEncoder extends MessageToByteEncoder<DrpcRequest> implements Serializable {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, DrpcRequest drpcRequest, ByteBuf byteBuf) throws Exception {
 
@@ -51,33 +51,33 @@ public class DrpcMessageEncoder extends MessageToByteEncoder<DrpcRequest> implem
         // 8个字节请求id
         byteBuf.writeLong(drpcRequest.getRequestId());
 
-        byte[] bodyBytes = getBodyBytes(drpcRequest.getRequestPayload());
+        // 1.根据配置的序列化方法进行序列化
+        Serializer serializer = SerializeFactory.getSerializer(DrpcBootstrap.SERIALIZE_TYPE).getSerializer();
+        byte[] bodyBytes = serializer.serialize(drpcRequest.getRequestPayload());
 
-        // 写入请求体
-        byteBuf.writeBytes(bodyBytes);
+        // 2.根据配置的压缩方式进行压缩
+
+
+
+        if (bodyBytes != null) {
+            byteBuf.writeBytes(bodyBytes);
+        }
+
+        // 心跳请求 bodyLength 为0
+        int bodyLength = bodyBytes == null ? 0 : bodyBytes.length;
+
 
         int writerIndex = byteBuf.writerIndex();
         byteBuf.writerIndex(MessageFormatConstant.MAGIC.length
                 + MessageFormatConstant.VERSION_LENGTH
                 + MessageFormatConstant.HEADER_FIELD_LENGTH);
-        byteBuf.writeInt(MessageFormatConstant.HEADER_LENGTH + bodyBytes.length);
+        byteBuf.writeInt(MessageFormatConstant.HEADER_LENGTH + bodyLength);
 
         byteBuf.writerIndex(writerIndex);
 
-    }
-
-    private byte[] getBodyBytes(RequestPayload requestPayload) {
-        // todo 针对不同消息类型做不同的请求 心跳 ?
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(requestPayload);
-            return baos.toByteArray();
-
-            // todo 压缩
-        } catch (IOException e) {
-            log.error("序列化时出现异常");
-            throw new RuntimeException(e);
+        if (log.isDebugEnabled()) {
+            log.debug("请求[{}]已经完成了报文的编码", drpcRequest.getRequestId());
         }
+
     }
 }

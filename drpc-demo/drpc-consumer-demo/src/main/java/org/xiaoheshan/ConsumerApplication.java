@@ -14,6 +14,7 @@ public class ConsumerApplication {
         DrpcBootstrap.getInstance()
                 .application("first-drpc-consumer")
                 .registry(new RegistryConfig("zookeeper://nas.kexincc.club:2181"))
+                .serialize("jdk")
                 .reference(reference);
 
         HelloDrpc helloDrpc = reference.get();

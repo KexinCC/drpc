@@ -2,21 +2,19 @@ package org.xiaoheshan;
 
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.xiaoheshan.channelHandler.handler.DrpcMessageDecoder;
+import org.xiaoheshan.channelHandler.handler.DrpcRequestDecoder;
+import org.xiaoheshan.channelHandler.handler.DrpcResponseEncoder;
 import org.xiaoheshan.channelHandler.handler.MethodCallHandler;
 import org.xiaoheshan.discovery.Registry;
 import org.xiaoheshan.discovery.RegistryConfig;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -29,9 +27,9 @@ public class DrpcBootstrap {
 
     private String appname = "default";
     private ProtocolConfig protocolConfig;
-
     private final int port = 8088;
     private Registry registry;
+
 
     // 维护已经发布且已经发布的服务列表 K:interface 全限定名称  V:serviceConfig
     public static final Map<String, ServiceConfig<?>> SERVICE_LIST = new ConcurrentHashMap<>(16);
@@ -41,6 +39,9 @@ public class DrpcBootstrap {
 
     // 定义一个全局对外挂起的 completableFuture
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
+
+    public static final IdGenerator ID_GENERATORD = new IdGenerator(1,2);
+    public static String SERIALIZE_TYPE = "jdk";
 
 
     private DrpcBootstrap() {
@@ -139,8 +140,9 @@ public class DrpcBootstrap {
                             // 这是核心 需要添加入站和出站的 handler
                             nioSocketChannel.pipeline()
                                     .addLast(new LoggingHandler())
-                                    .addLast(new DrpcMessageDecoder())
-                                    .addLast(new MethodCallHandler());
+                                    .addLast(new DrpcRequestDecoder())
+                                    .addLast(new MethodCallHandler())
+                                    .addLast(new DrpcResponseEncoder());
                         }
                     });
 
@@ -172,4 +174,16 @@ public class DrpcBootstrap {
         return this;
     }
 
+    /**
+     * 设置序列化方式
+     * @param serializeType 序列化方式
+     * @return this
+     */
+    public DrpcBootstrap serialize(String serializeType) {
+        SERIALIZE_TYPE = serializeType;
+        if (log.isDebugEnabled()) {
+            log.debug("当前工程使用: [{}]序列化", serializeType);
+        }
+        return this;
+    }
 }

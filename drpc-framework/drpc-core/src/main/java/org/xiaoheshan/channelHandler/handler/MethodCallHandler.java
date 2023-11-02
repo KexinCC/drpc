@@ -5,7 +5,9 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.DrpcBootstrap;
 import org.xiaoheshan.ServiceConfig;
+import org.xiaoheshan.enumeration.RespCode;
 import org.xiaoheshan.transport.message.DrpcRequest;
+import org.xiaoheshan.transport.message.DrpcResponse;
 import org.xiaoheshan.transport.message.RequestPayload;
 
 import java.lang.reflect.InvocationTargetException;
@@ -20,12 +22,21 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<DrpcRequest> 
         RequestPayload requestPayload = drpcRequest.getRequestPayload();
 
         // 2.根据负载内容 进行方法调用
-        Object object = callTargetMethod(requestPayload);
+        Object result = callTargetMethod(requestPayload);
+        if (log.isDebugEnabled()) {
+            log.debug("请求[{}]已经在服务端完成了方法调用", drpcRequest.getRequestId());
+        }
 
         // 3.封装响应
+        DrpcResponse drpcResponse = new DrpcResponse();
+        drpcResponse.setCode(RespCode.SUCCESS.getCode());
+        drpcResponse.setRequestId(drpcRequest.getRequestId());
+        drpcResponse.setSerializeType(drpcRequest.getSerializeType());
+        drpcResponse.setCompressType(drpcRequest.getCompressType());
+        drpcResponse.setBody(result);
 
-        // 4.封装响应
-        channelHandlerContext.channel().writeAndFlush(object);
+        // 4.写出响应
+        channelHandlerContext.channel().writeAndFlush(drpcResponse);
     }
 
     private Object callTargetMethod(RequestPayload requestPayload) {

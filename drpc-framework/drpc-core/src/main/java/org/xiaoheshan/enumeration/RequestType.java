@@ -10,8 +10,8 @@ public enum RequestType {
 
     REQUEST((byte) 1, "普通请求"), HEART_HEAT((byte) 2, "心跳检测");
 
-    public byte ID;
-    public String TYPE;
+    private byte ID;
+    private String TYPE;
 
     RequestType(byte id, String type) {
         this.ID = id;

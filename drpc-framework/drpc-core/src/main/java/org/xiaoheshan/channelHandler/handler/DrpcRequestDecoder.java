@@ -4,6 +4,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
+import org.xiaoheshan.enumeration.RequestType;
+import org.xiaoheshan.serialize.SerializeFactory;
+import org.xiaoheshan.serialize.Serializer;
 import org.xiaoheshan.transport.message.DrpcRequest;
 import org.xiaoheshan.transport.message.MessageFormatConstant;
 import org.xiaoheshan.transport.message.RequestPayload;
@@ -26,9 +29,9 @@ import java.io.ObjectInputStream;
  * 出站时 第一个经过的处理器
  */
 @Slf4j
-public class DrpcMessageDecoder extends LengthFieldBasedFrameDecoder {
+public class DrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
 
-    public DrpcMessageDecoder() {
+    public DrpcRequestDecoder() {
         /**
          * maxFrameLength 超过最大帧长度的报文直接丢弃
          */
@@ -108,8 +111,8 @@ public class DrpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         drpcRequest.setSerializeType(serializeType);
         drpcRequest.setCompressType(compressType);
 
-        // todo 心跳请求没有负载 此处可以直接返回
-        if (requestType == 2) {
+        // 心跳请求没有负载 此处可以直接返回
+        if (requestType == RequestType.HEART_HEAT.getID()) {
             return drpcRequest;
         }
 
@@ -117,19 +120,17 @@ public class DrpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         byte[] payload = new byte[payloadLength];
         byteBuf.readBytes(payload);
 
-        // 可以解压缩序列化
         // todo 解压缩
 
-        // todo 反序列化
-        try (
-                ByteArrayInputStream bis = new ByteArrayInputStream(payload);
-                ObjectInputStream ois = new ObjectInputStream(bis);
-        ) {
-            RequestPayload requestPayload = (RequestPayload) ois.readObject();
-            drpcRequest.setRequestPayload(requestPayload);
-        } catch (IOException | ClassNotFoundException e) {
-            log.error("请求[{}]反序列化时发生了异常", e);
+        // 反序列化
+        Serializer serializer = SerializeFactory.getSerializer(drpcRequest.getSerializeType()).getSerializer();
+        RequestPayload requestPayload = serializer.deserialize(payload, RequestPayload.class);
+        drpcRequest.setRequestPayload(requestPayload);
+
+        if (log.isDebugEnabled()) {
+            log.debug("请求[{}]已经完成了报文的解码", drpcRequest.getRequestId());
         }
+
 
         return drpcRequest;
     }

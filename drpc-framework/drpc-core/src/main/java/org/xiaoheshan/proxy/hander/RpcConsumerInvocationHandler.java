@@ -9,6 +9,7 @@ import org.xiaoheshan.discovery.Registry;
 import org.xiaoheshan.enumeration.RequestType;
 import org.xiaoheshan.exception.DiscoveryException;
 import org.xiaoheshan.exception.NetWorkException;
+import org.xiaoheshan.serialize.SerializeFactory;
 import org.xiaoheshan.transport.message.DrpcRequest;
 import org.xiaoheshan.transport.message.RequestPayload;
 
@@ -72,10 +73,10 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
 
         DrpcRequest drpcRequest = DrpcRequest.builder()
-                .requestId(1L)
+                .requestId(DrpcBootstrap.ID_GENERATORD.getId())
                 .compressType((byte) 1)
-                .requestType(RequestType.REQUEST.ID)
-                .serializeType((byte) 1)
+                .requestType(RequestType.REQUEST.getID())
+                .serializeType(SerializeFactory.getSerializer(DrpcBootstrap.SERIALIZE_TYPE).getSerializeType())
                 .requestPayload(requestPayload)
                 .build();
 
