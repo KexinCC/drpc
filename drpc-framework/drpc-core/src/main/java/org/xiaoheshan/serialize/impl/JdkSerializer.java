@@ -22,6 +22,7 @@ public class JdkSerializer implements Serializer {
             if (log.isDebugEnabled()) {
                 log.debug("序列化对象[{}]成功", object.getClass().getName());
             }
+            System.out.println(baos.toByteArray().length);
             return baos.toByteArray();
         } catch (IOException e) {
             log.error("序列化对象[{}]时出现异常", object);

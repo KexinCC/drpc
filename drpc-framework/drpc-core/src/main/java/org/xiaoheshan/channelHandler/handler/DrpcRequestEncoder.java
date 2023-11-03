@@ -5,6 +5,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.DrpcBootstrap;
+import org.xiaoheshan.compress.CompressFactory;
+import org.xiaoheshan.compress.Compressor;
 import org.xiaoheshan.serialize.SerializeFactory;
 import org.xiaoheshan.serialize.Serializer;
 import org.xiaoheshan.serialize.SerializerWrapper;
@@ -56,8 +58,8 @@ public class DrpcRequestEncoder extends MessageToByteEncoder<DrpcRequest> implem
         byte[] bodyBytes = serializer.serialize(drpcRequest.getRequestPayload());
 
         // 2.根据配置的压缩方式进行压缩
-
-
+        Compressor compressor = CompressFactory.getCompressor(DrpcBootstrap.COMPRESS_TYPE).getCompressor();
+        bodyBytes = compressor.compress(bodyBytes);
 
         if (bodyBytes != null) {
             byteBuf.writeBytes(bodyBytes);
@@ -76,7 +78,7 @@ public class DrpcRequestEncoder extends MessageToByteEncoder<DrpcRequest> implem
         byteBuf.writerIndex(writerIndex);
 
         if (log.isDebugEnabled()) {
-            log.debug("请求[{}]已经完成了报文的编码", drpcRequest.getRequestId());
+            log.debug("消费者对请求[{}]完成了报文的编码", drpcRequest.getRequestId());
         }
 
     }

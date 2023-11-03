@@ -5,6 +5,7 @@ import io.netty.channel.ChannelFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.DrpcBootstrap;
 import org.xiaoheshan.NettyBootstrapInitializer;
+import org.xiaoheshan.compress.CompressFactory;
 import org.xiaoheshan.discovery.Registry;
 import org.xiaoheshan.enumeration.RequestType;
 import org.xiaoheshan.exception.DiscoveryException;
@@ -74,9 +75,9 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
         DrpcRequest drpcRequest = DrpcRequest.builder()
                 .requestId(DrpcBootstrap.ID_GENERATORD.getId())
-                .compressType((byte) 1)
+                .compressType(CompressFactory.getCompressor(DrpcBootstrap.COMPRESS_TYPE).getCompressCode())
                 .requestType(RequestType.REQUEST.getID())
-                .serializeType(SerializeFactory.getSerializer(DrpcBootstrap.SERIALIZE_TYPE).getSerializeType())
+                .serializeType(SerializeFactory.getSerializer(DrpcBootstrap.SERIALIZE_TYPE).getSerializeCode())
                 .requestPayload(requestPayload)
                 .build();
 

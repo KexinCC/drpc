@@ -30,6 +30,8 @@ public class DrpcBootstrap {
     private final int port = 8088;
     private Registry registry;
 
+    public static String COMPRESS_TYPE = "gzip";
+    public static String SERIALIZE_TYPE = "jdk";
 
     // 维护已经发布且已经发布的服务列表 K:interface 全限定名称  V:serviceConfig
     public static final Map<String, ServiceConfig<?>> SERVICE_LIST = new ConcurrentHashMap<>(16);
@@ -41,7 +43,6 @@ public class DrpcBootstrap {
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
     public static final IdGenerator ID_GENERATORD = new IdGenerator(1,2);
-    public static String SERIALIZE_TYPE = "jdk";
 
 
     private DrpcBootstrap() {
@@ -182,7 +183,15 @@ public class DrpcBootstrap {
     public DrpcBootstrap serialize(String serializeType) {
         SERIALIZE_TYPE = serializeType;
         if (log.isDebugEnabled()) {
-            log.debug("当前工程使用: [{}]序列化", serializeType);
+            log.debug("当前工程使用:[{}]序列化", serializeType);
+        }
+        return this;
+    }
+
+    public DrpcBootstrap commpress(String compressType) {
+        COMPRESS_TYPE = compressType;
+        if (log.isDebugEnabled()) {
+            log.debug("当前工程使用:[{}]压缩", compressType);
         }
         return this;
     }

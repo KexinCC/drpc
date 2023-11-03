@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import lombok.extern.slf4j.Slf4j;
+import org.xiaoheshan.compress.CompressFactory;
+import org.xiaoheshan.compress.Compressor;
 import org.xiaoheshan.serialize.SerializeFactory;
 import org.xiaoheshan.serialize.Serializer;
 import org.xiaoheshan.transport.message.DrpcRequest;
@@ -59,7 +61,10 @@ public class DrpcResponseEncoder extends MessageToByteEncoder<DrpcResponse> impl
         Serializer serializer = SerializeFactory.getSerializer(drpcResponse.getSerializeType()).getSerializer();
         byte[] bodyBytes  = serializer.serialize(drpcResponse.getBody());
 
-        // todo 压缩
+        // 压缩
+        Compressor compressor = CompressFactory.getCompressor(drpcResponse.getCompressType()).getCompressor();
+        bodyBytes = compressor.compress(bodyBytes);
+
 
         if (bodyBytes != null) {
             byteBuf.writeBytes(bodyBytes);
@@ -78,7 +83,7 @@ public class DrpcResponseEncoder extends MessageToByteEncoder<DrpcResponse> impl
         byteBuf.writerIndex(writerIndex);
 
         if (log.isDebugEnabled()) {
-            log.debug("响应[{}]已经在服务端完成了编码工作", drpcResponse.getRequestId());
+            log.debug("生产者对响应[{}]完成编码工作", drpcResponse.getRequestId());
         }
 
     }

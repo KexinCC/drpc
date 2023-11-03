@@ -1,4 +1,5 @@
-package org.xiaoheshan.serialize;
+package org.xiaoheshan.compress;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,8 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SerializerWrapper {
-    private byte serializeCode;
+public class CompressWrapper {
+    private byte compressCode;
     private String name;
-    private Serializer serializer;
+    private Compressor compressor;
 }

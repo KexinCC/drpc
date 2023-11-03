@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
+import org.xiaoheshan.compress.CompressFactory;
+import org.xiaoheshan.compress.Compressor;
 import org.xiaoheshan.enumeration.RequestType;
 import org.xiaoheshan.serialize.SerializeFactory;
 import org.xiaoheshan.serialize.Serializer;
@@ -123,7 +125,8 @@ public class DrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         byteBuf.readBytes(payload);
 
         // todo 解压缩
-
+        Compressor compressor = CompressFactory.getCompressor(compressType).getCompressor();
+        payload = compressor.decompress(payload);
 
 
         // 序列化
@@ -132,7 +135,7 @@ public class DrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         drpcResponse.setBody(body);
 
         if (log.isDebugEnabled()) {
-            log.debug("请求[{}]已经在服务端完成了解码工作", drpcResponse.getRequestId());
+            log.debug("消费者对请求[{}]完成了解码工作", drpcResponse.getRequestId());
         }
 
         return drpcResponse;
