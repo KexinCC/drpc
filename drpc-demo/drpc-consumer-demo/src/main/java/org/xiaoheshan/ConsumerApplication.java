@@ -18,11 +18,10 @@ public class ConsumerApplication {
                 .compress("gzip")
                 .reference(reference);
 
-
         for (int i = 0; i < 10; i++) {
-          HelloDrpc helloDrpc = reference.get();
-                  String hi = helloDrpc.sayHi("hihi");
-                  log.info("hi ---- > {}", hi);
+            HelloDrpc helloDrpc = reference.get();
+            String hi = helloDrpc.sayHi("hihi");
+            log.info("hi ---- > {}", hi);
         }
 
 

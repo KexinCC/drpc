@@ -19,7 +19,7 @@ public class MySimpleInBoundHandler extends SimpleChannelInboundHandler<DrpcResp
         /*
          * 处理入站请求 并且服务器返回的结果放在 CompletableFuture 之中
          */
-        CompletableFuture<Object> completableFuture = DrpcBootstrap.PENDING_REQUEST.get(1L);
+        CompletableFuture<Object> completableFuture = DrpcBootstrap.PENDING_REQUEST.get(drpcResponse.getRequestId());
         completableFuture.complete(returnValue);
 
         if (log.isDebugEnabled()) {

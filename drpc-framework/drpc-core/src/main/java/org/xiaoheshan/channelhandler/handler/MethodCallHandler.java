@@ -5,7 +5,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.xiaoheshan.DrpcBootstrap;
 import org.xiaoheshan.ServiceConfig;
-import org.xiaoheshan.enumeration.RespCode;
+import org.xiaoheshan.enumeration.ResponseType;
 import org.xiaoheshan.transport.message.DrpcRequest;
 import org.xiaoheshan.transport.message.DrpcResponse;
 import org.xiaoheshan.transport.message.RequestPayload;
@@ -29,7 +29,7 @@ public class MethodCallHandler extends SimpleChannelInboundHandler<DrpcRequest> 
 
         // 3.封装响应
         DrpcResponse drpcResponse = new DrpcResponse();
-        drpcResponse.setCode(RespCode.SUCCESS.getCode());
+        drpcResponse.setCode(ResponseType.HEART_BEAT.getCode());
         drpcResponse.setRequestId(drpcRequest.getRequestId());
         drpcResponse.setSerializeType(drpcRequest.getSerializeType());
         drpcResponse.setCompressType(drpcRequest.getCompressType());

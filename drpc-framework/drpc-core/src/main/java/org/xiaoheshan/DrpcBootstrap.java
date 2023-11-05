@@ -32,7 +32,7 @@ public class DrpcBootstrap {
 
     private String appname = "default";
     private ProtocolConfig protocolConfig;
-    public static final int PORT = 8090;
+    public static final int PORT = 8088;
 
     @Getter
     private Registry registry;

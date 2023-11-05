@@ -103,7 +103,7 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
         // 4.写出报文
         CompletableFuture<Object> completableFuture = new CompletableFuture<>();
         // 将CompletableFuture暴露
-        DrpcBootstrap.PENDING_REQUEST.put(1L, completableFuture);
+        DrpcBootstrap.PENDING_REQUEST.put(drpcRequest.getRequestId(), completableFuture);
 
 
         // 写出了请求 这个请求的实例会进入 pipeline 执行
