@@ -4,6 +4,7 @@ import org.xiaoheshan.ServiceConfig;
 import org.xiaoheshan.discovery.Registry;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 
 public class NacosRegistry implements Registry {
     public NacosRegistry(String host, int timeout) {
@@ -15,7 +16,7 @@ public class NacosRegistry implements Registry {
     }
 
     @Override
-    public InetSocketAddress lookup(String name) {
+    public List<InetSocketAddress> lookup(String name) {
         return null;
     }
 }

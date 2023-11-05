@@ -7,12 +7,17 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.xiaoheshan.channelHandler.handler.DrpcRequestDecoder;
-import org.xiaoheshan.channelHandler.handler.DrpcResponseEncoder;
-import org.xiaoheshan.channelHandler.handler.MethodCallHandler;
+import org.xiaoheshan.channelhandler.handler.DrpcRequestDecoder;
+import org.xiaoheshan.channelhandler.handler.DrpcResponseEncoder;
+import org.xiaoheshan.channelhandler.handler.MethodCallHandler;
 import org.xiaoheshan.discovery.Registry;
 import org.xiaoheshan.discovery.RegistryConfig;
+import org.xiaoheshan.loadbalancer.LoadBalancer;
+import org.xiaoheshan.loadbalancer.impl.ConsistentHashBalancer;
+import org.xiaoheshan.loadbalancer.impl.RoundRobinLoadBalancer;
+import org.xiaoheshan.transport.message.DrpcRequest;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -27,9 +32,12 @@ public class DrpcBootstrap {
 
     private String appname = "default";
     private ProtocolConfig protocolConfig;
-    private final int port = 8088;
+    public static final int PORT = 8090;
+
+    @Getter
     private Registry registry;
 
+    public static LoadBalancer LOAD_BALANCER;
     public static String COMPRESS_TYPE = "gzip";
     public static String SERIALIZE_TYPE = "jdk";
 
@@ -42,7 +50,8 @@ public class DrpcBootstrap {
     // 定义一个全局对外挂起的 completableFuture
     public static final Map<Long, CompletableFuture<Object>> PENDING_REQUEST = new ConcurrentHashMap<>();
 
-    public static final IdGenerator ID_GENERATORD = new IdGenerator(1,2);
+    public static final IdGenerator ID_GENERATOR = new IdGenerator(1, 2);
+    public static final ThreadLocal<DrpcRequest> REQUEST_THREAD_LOCAL = new ThreadLocal<>();
 
 
     private DrpcBootstrap() {
@@ -72,6 +81,7 @@ public class DrpcBootstrap {
      */
     public DrpcBootstrap registry(RegistryConfig registryConfig) {
         this.registry = registryConfig.getRegistry();
+        LOAD_BALANCER = new ConsistentHashBalancer();
         return this;
     }
 
@@ -148,7 +158,7 @@ public class DrpcBootstrap {
                     });
 
             // 4.绑定端口
-            ChannelFuture channelFuture = serverBootstrap.bind(port).sync();
+            ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -157,7 +167,7 @@ public class DrpcBootstrap {
                 boss.shutdownGracefully().sync();
                 worker.shutdownGracefully().sync();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error("netty关闭发生异常",e);
             }
         }
     }
@@ -188,7 +198,7 @@ public class DrpcBootstrap {
         return this;
     }
 
-    public DrpcBootstrap commpress(String compressType) {
+    public DrpcBootstrap compress(String compressType) {
         COMPRESS_TYPE = compressType;
         if (log.isDebugEnabled()) {
             log.debug("当前工程使用:[{}]压缩", compressType);

@@ -1,12 +1,12 @@
-package org.xiaoheshan.channelHandler;
+package org.xiaoheshan.channelhandler;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.xiaoheshan.channelHandler.handler.DrpcRequestEncoder;
-import org.xiaoheshan.channelHandler.handler.DrpcResponseDecoder;
-import org.xiaoheshan.channelHandler.handler.MySimpleInBoundHandler;
+import org.xiaoheshan.channelhandler.handler.DrpcRequestEncoder;
+import org.xiaoheshan.channelhandler.handler.DrpcResponseDecoder;
+import org.xiaoheshan.channelhandler.handler.MySimpleInBoundHandler;
 
 public class ConsumerChannelInitializer extends ChannelInitializer<SocketChannel> {
 

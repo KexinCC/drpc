@@ -45,24 +45,6 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 //        log.info("method:{}", method.getName());
 //        log.info("args:{}", args);
 
-
-        // 1. 发现服务
-        // 传入服务的名字 返回ip+端口
-        InetSocketAddress address = registry.lookup(interfaceRef.getName());
-        if (log.isDebugEnabled()) {
-            log.debug("服务调用方 发现了服务[{}]的可用主机[{}]", interfaceRef.getName(), address.toString());
-        }
-
-        // 2. 尝试从全局缓存中获取一个通道
-        Channel channel = getAvailableChannel(address);
-        if (log.isDebugEnabled()) {
-            log.debug("以获取和[{}]建立的连接通道 地址[{}]", interfaceRef.getName(), address.toString());
-        }
-
-        /*
-            --------------------------封装报文------------------------
-         */
-
         RequestPayload requestPayload = RequestPayload
                 .builder()
                 .interfaceName(interfaceRef.getName())
@@ -74,12 +56,32 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
 
 
         DrpcRequest drpcRequest = DrpcRequest.builder()
-                .requestId(DrpcBootstrap.ID_GENERATORD.getId())
+                .requestId(DrpcBootstrap.ID_GENERATOR.getId())
                 .compressType(CompressFactory.getCompressor(DrpcBootstrap.COMPRESS_TYPE).getCompressCode())
                 .requestType(RequestType.REQUEST.getID())
                 .serializeType(SerializeFactory.getSerializer(DrpcBootstrap.SERIALIZE_TYPE).getSerializeCode())
                 .requestPayload(requestPayload)
                 .build();
+
+        // 将请求存入本地线程 在合适的时候调用remove方法
+        DrpcBootstrap.REQUEST_THREAD_LOCAL.set(drpcRequest);
+
+
+
+
+        // 从注册中心拉取可用的服务 通过客户端负载均衡
+        InetSocketAddress address = DrpcBootstrap.LOAD_BALANCER.selectServerAddress(interfaceRef.getName());
+        if (log.isDebugEnabled()) {
+            log.debug("服务调用方 发现了服务[{}]的可用主机[{}]", interfaceRef.getName(), address.toString());
+        }
+
+        // 2. 尝试从全局缓存中获取一个通道
+        Channel channel = getAvailableChannel(address);
+        if (log.isDebugEnabled()) {
+            log.debug("以获取和[{}]建立的连接通道 地址[{}]", interfaceRef.getName(), address.toString());
+        }
+
+
 
 
 //                /*
@@ -111,6 +113,8 @@ public class RpcConsumerInvocationHandler implements InvocationHandler {
                         completableFuture.completeExceptionally(promise.cause());
                     }
                 });
+
+        DrpcBootstrap.REQUEST_THREAD_LOCAL.remove();
 
         // 5.获取响应结果
         // 如果没有地方处理 cb 这里会阻塞 等待complete 方法执行

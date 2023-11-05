@@ -1,4 +1,4 @@
-package org.xiaoheshan.channelHandler.handler;
+package org.xiaoheshan.channelhandler.handler;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

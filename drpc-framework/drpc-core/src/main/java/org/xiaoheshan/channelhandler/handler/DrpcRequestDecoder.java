@@ -1,4 +1,4 @@
-package org.xiaoheshan.channelHandler.handler;
+package org.xiaoheshan.channelhandler.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,13 +10,8 @@ import org.xiaoheshan.enumeration.RequestType;
 import org.xiaoheshan.serialize.SerializeFactory;
 import org.xiaoheshan.serialize.Serializer;
 import org.xiaoheshan.transport.message.DrpcRequest;
-import org.xiaoheshan.transport.message.DrpcResponse;
 import org.xiaoheshan.transport.message.MessageFormatConstant;
 import org.xiaoheshan.transport.message.RequestPayload;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 
 /**
@@ -26,15 +21,15 @@ import java.io.ObjectInputStream;
  * 4byte full length(报文总长度)
  * 1byte serialize
  * 1byte compress
- * 1byte code
+ * 1byte requestType
  * 8byte requestId
  * body
  * 出站时 第一个经过的处理器
  */
 @Slf4j
-public class DrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
+public class DrpcRequestDecoder extends LengthFieldBasedFrameDecoder {
 
-    public DrpcResponseDecoder() {
+    public DrpcRequestDecoder() {
         /**
          * maxFrameLength 超过最大帧长度的报文直接丢弃
          */
@@ -101,43 +96,44 @@ public class DrpcResponseDecoder extends LengthFieldBasedFrameDecoder {
         byte compressType = byteBuf.readByte();
 
         // 7.请求类型 todo: 判断是不是心跳检测
-        byte responseCode = byteBuf.readByte();
+        byte requestType = byteBuf.readByte();
 
 
         // 8.请求id
         long requestId = byteBuf.readLong();
 
         // 封装一个RequestPayload
-        DrpcResponse drpcResponse = new DrpcResponse();
+        DrpcRequest drpcRequest = new DrpcRequest();
+        drpcRequest.setRequestId(requestId);
+        drpcRequest.setRequestType(requestType);
+        drpcRequest.setSerializeType(serializeType);
+        drpcRequest.setCompressType(compressType);
 
-        drpcResponse.setRequestId(requestId);
-        drpcResponse.setCode(responseCode);
-        drpcResponse.setSerializeType(serializeType);
-        drpcResponse.setCompressType(compressType);
+        // 心跳请求没有负载 此处可以直接返回
+        if (requestType == RequestType.HEART_HEAT.getID()) {
+            return drpcRequest;
+        }
 
-        // todo 心跳
-//        if (requestType == RequestType.HEART_HEAT.getID()) {
-//            return drpcRequest;
-//        }
-
-        int bodyLength = fullLength - headLength;
-        byte[] payload = new byte[bodyLength];
+        int payloadLength = fullLength - headLength;
+        byte[] payload = new byte[payloadLength];
         byteBuf.readBytes(payload);
 
-        // todo 解压缩
+        // 解压
         Compressor compressor = CompressFactory.getCompressor(compressType).getCompressor();
         payload = compressor.decompress(payload);
 
-
-        // 序列化
-        Serializer serializer = SerializeFactory.getSerializer(drpcResponse.getSerializeType()).getSerializer();
-        Object body = serializer.deserialize(payload, Object.class);
-        drpcResponse.setBody(body);
+        // 反序列化
+        Serializer serializer = SerializeFactory.getSerializer(drpcRequest.getSerializeType()).getSerializer();
+        RequestPayload requestPayload = serializer.deserialize(payload, RequestPayload.class);
+        drpcRequest.setRequestPayload(requestPayload);
 
         if (log.isDebugEnabled()) {
-            log.debug("消费者对请求[{}]完成了解码工作", drpcResponse.getRequestId());
+            log.debug("生产者对请求[{}]完成解码", drpcRequest.getRequestId());
         }
 
-        return drpcResponse;
+
+        return drpcRequest;
     }
+
+
 }

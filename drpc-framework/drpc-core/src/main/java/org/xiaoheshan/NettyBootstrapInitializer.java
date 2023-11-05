@@ -5,7 +5,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.xiaoheshan.channelHandler.ConsumerChannelInitializer;
+import org.xiaoheshan.channelhandler.ConsumerChannelInitializer;
 
 /**
  * 提供Bootstrap单例

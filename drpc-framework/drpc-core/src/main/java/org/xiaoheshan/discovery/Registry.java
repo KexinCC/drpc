@@ -3,6 +3,7 @@ package org.xiaoheshan.discovery;
 import org.xiaoheshan.ServiceConfig;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * 注册中心
@@ -19,6 +20,6 @@ public interface Registry {
      * @param name 服务的名称
      * @return 服务的ip+端口
      */
-    InetSocketAddress lookup(String name);
+    List<InetSocketAddress> lookup(String name);
 
 }

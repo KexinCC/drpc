@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.xiaoheshan.Constant;
+import org.xiaoheshan.DrpcBootstrap;
 import org.xiaoheshan.ServiceConfig;
 import org.xiaoheshan.discovery.AbstractRegistry;
 import org.xiaoheshan.exception.DiscoveryException;
@@ -46,7 +47,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
         // 服务提供方的端口一般自己设定， 需要一个获取ip的方法
         // ip通常是一个局域网的ip
         // todo:后续处理端口号的问题
-        String node = parent + "/" + NetUtils.getHostIp() + ":" + 8088;
+        String node = parent + "/" + NetUtils.getHostIp() + ":" + DrpcBootstrap.PORT;
         if (!ZookeeperUtils.exist(zookeeper, node, null)) {
             ZookeeperNode zookeeperNode = new ZookeeperNode(node, null);
             boolean flag = ZookeeperUtils.createNode(zookeeper, zookeeperNode, null, CreateMode.EPHEMERAL);
@@ -57,8 +58,13 @@ public class ZookeeperRegistry extends AbstractRegistry {
         }
     }
 
+    /**
+     * 注册中心 拉取服务列表
+     * @param serviceName 服务的名称
+     * @return  服务列表
+     */
     @Override
-    public InetSocketAddress lookup(String serviceName) {
+    public List<InetSocketAddress> lookup(String serviceName) {
         // 1.找到服务对应的节点
         String serviceFullName = Constant.BASE_PROVIDERS_PATH + "/" + serviceName;
 
@@ -76,7 +82,7 @@ public class ZookeeperRegistry extends AbstractRegistry {
             throw new DiscoveryException("未发现任何可用的节点");
         }
 
-        return socketList.get(0);
+        return socketList;
 
 
     }
